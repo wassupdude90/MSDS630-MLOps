@@ -1,0 +1,18 @@
+schema: '2.0'
+stages:
+  preprocess:
+    cmd: python src/preprocessing.py
+    deps:
+    - path: data/wine_data.csv
+      hash: md5
+      md5: 2925c4a8cd201c79d97d3d283429ef23
+      size: 12261
+    - path: src/preprocessing.py
+      hash: md5
+      md5: d274116e0dba1d4090361de02adef0fa
+      size: 1187
+    outs:
+    - path: data/processed/wine_scaled.csv
+      hash: md5
+      md5: 1b44a63dadd1e0e04e88c7ca8e850c06
+      size: 45961

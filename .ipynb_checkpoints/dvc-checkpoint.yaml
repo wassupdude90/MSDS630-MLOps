@@ -1,0 +1,8 @@
+stages:
+  preprocess:
+    cmd: python src/preprocessing.py
+    deps:
+      - data/wine_data.csv
+      - src/preprocessing.py
+    outs:
+      - data/processed/wine_scaled.csv

@@ -1,85 +1,58 @@
-"""
-Training Flow for ML Model
-This flow handles data loading, preprocessing, model training, 
-and model registration with MLFlow.
-"""
 from metaflow import FlowSpec, step, Parameter
 import pandas as pd
 import numpy as np
 import mlflow
 import os
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+import xgboost as xgb
 
+## Training Flow to handle data loading, preprocessing, model training, and model registration 
 class TrainingFlow(FlowSpec):
-    # Parameters that can be passed to the flow
-    random_state = Parameter('random_state', 
-                           help='Random seed for reproducibility',
-                           default=42,
-                           type=int)
-    
-    test_size = Parameter('test_size',
-                         help='Proportion of data to use for testing',
-                         default=0.2,
-                         type=float)
-    
-    model_type = Parameter('model_type',
-                          help='Type of model to train (rf, xgb)',
-                          default='rf')
+    # Params
+    random_state = Parameter('random_state', help='Random seed for reproducibility', default=42, type=int)
+    test_size = Parameter('test_size', help='Proportion of data to use for testing', default=0.2, type=float)
+    model_type = Parameter('model_type', help='Type of model to train (rf, xgb)', default='rf')
     
     @step
     def start(self):
-        """
-        Starting point: Load the data
-        """
         print("Starting the training flow...")
         
-        # Set up MLFlow
+        # Setup
         mlflow.set_tracking_uri("file:./mlruns")
         mlflow.set_experiment("metaflow-training")
-        
-        # This would be replaced with your actual data loading code
-        # For example, if you're using a CSV file:
-        try:
-            # Assuming you have a data folder with your dataset
-            # Replace with your actual data path
-            self.data = pd.read_csv('data/your_dataset.csv')
-            print(f"Loaded dataset with {self.data.shape[0]} rows and {self.data.shape[1]} columns")
-        except Exception as e:
-            print(f"Error loading data: {e}")
-            # Fallback to using a sample dataset if yours is not available
-            from sklearn import datasets
-            wine = datasets.load_wine()
-            self.data = pd.DataFrame(wine.data, columns=wine.feature_names)
-            self.data['target'] = wine.target
-            print("Loaded wine dataset as fallback")
-            
+
+        # Load the Wine dataset, my favorite lol
+        wine = datasets.load_wine()
+        self.data = pd.DataFrame(wine.data, columns=wine.feature_names)
+        self.data['target'] = wine.target
         self.next(self.preprocess)
     
     @step
     def preprocess(self):
         """
-        Preprocess the data, perform feature engineering
+        Preprocessing the data and performing feature engineering
         """
         print("Preprocessing data...")
         
-        # Handle missing values if any
+        # Handle missing values
         self.data = self.data.fillna(self.data.mean())
         
-        # Define features and target
+        # Define features/target
         if 'target' in self.data.columns:
             self.target_col = 'target'
         else:
-            # Assuming the last column is the target
+            # Last column is the target
             self.target_col = self.data.columns[-1]
         
-        # Split features and target
+        # Split features/target
         self.X = self.data.drop(self.target_col, axis=1)
         self.y = self.data[self.target_col]
         
-        # Feature names for later
+        # Feature names
         self.feature_names = list(self.X.columns)
         
-        # Train-test split
-        from sklearn.model_selection import train_test_split
+        # Train-test split        
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y, test_size=self.test_size, random_state=self.random_state
         )
@@ -92,18 +65,17 @@ class TrainingFlow(FlowSpec):
     @step
     def train_models(self):
         """
-        Train multiple models with different hyperparameters
+        Train using RF and XGB with different hyperparameters
         """
         print(f"Training {self.model_type} models with different hyperparameters...")
         
         self.models = []
         self.scores = []
         
-        # Train different models based on model_type parameter
+        # Train different models based on model_type 
         if self.model_type == 'rf':
-            from sklearn.ensemble import RandomForestClassifier
             
-            # Define hyperparameters to try
+            # Define hyperparameters; just trying a few
             n_estimators_list = [100, 200]
             max_depth_list = [None, 10, 20]
             
@@ -136,10 +108,8 @@ class TrainingFlow(FlowSpec):
                     print(f"Model with n_estimators={n_estimators}, max_depth={max_depth}: score={score:.4f}")
         
         elif self.model_type == 'xgb':
-            try:
-                import xgboost as xgb
-                
-                # Define hyperparameters to try
+            try:                                
+                # Define hyperparameters
                 n_estimators_list = [100, 200]
                 max_depth_list = [3, 6, 9]
                 
@@ -170,8 +140,6 @@ class TrainingFlow(FlowSpec):
                         self.scores.append(score)
                         
                         print(f"Model with n_estimators={n_estimators}, max_depth={max_depth}: score={score:.4f}")
-            except ImportError:
-                print("XGBoost not installed, falling back to RandomForest")
                 self.next(self.train_models)
         
         self.next(self.select_best_model)
@@ -197,7 +165,7 @@ class TrainingFlow(FlowSpec):
         """
         print("Registering best model with MLFlow...")
         
-        # Start an MLFlow run
+        # Start an MLFlow run (pretty easy from here on)
         with mlflow.start_run() as run:
             # Log parameters
             for param_name, param_value in self.best_model['params'].items():
@@ -214,7 +182,7 @@ class TrainingFlow(FlowSpec):
                 registered_model_name=model_name
             )
             
-            # Store the run ID for later reference
+            # Store the run ID for reference
             self.run_id = run.info.run_id
             
             print(f"Model registered with MLFlow as {model_name}")
@@ -224,10 +192,7 @@ class TrainingFlow(FlowSpec):
     
     @step
     def end(self):
-        """
-        End of the flow
-        """
-        print("Training flow completed successfully!")
+        print("Training flow done!")
         print(f"Best model ({self.model_type}) accuracy: {self.best_model['score']:.4f}")
         print(f"Model parameters: {self.best_model['params']}")
         print(f"MLFlow run ID: {self.run_id}")

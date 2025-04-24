@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1745478218300
+current_stage: None
+description: null
+last_updated_timestamp: 1745478218300
+name: metaflow-rf-model
+run_id: 7ef4df5d53d94b168cf3321b5e3264d6
+run_link: null
+source: file:///Users/wassu/Zane/MSDS at USFCA 24-25/Spring 2025/MSDS 603/MSDS630-MLOps/labs/lab6/src/mlruns/0/7ef4df5d53d94b168cf3321b5e3264d6/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///Users/wassu/Zane/MSDS at USFCA 24-25/Spring 2025/MSDS 603/MSDS630-MLOps/labs/lab6/src/mlruns/0/7ef4df5d53d94b168cf3321b5e3264d6/artifacts/model
+user_id: null
+version: 1

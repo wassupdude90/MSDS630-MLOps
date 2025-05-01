@@ -1,7 +1,7 @@
 import requests
 import json
 
-# URL of your API (when running locally)
+# API local URL
 url = 'http://127.0.0.1:8000/predict'
 
 # Sample data for a wine (using standard values from the Wine dataset)
@@ -21,9 +21,9 @@ sample_data = {
     "proline": 1065.0
 }
 
-# Send the request to the API
+# Request to the API
 response = requests.post(url, json=sample_data)
 
-# Print the response
+# Print response
 print("Status Code:", response.status_code)
 print("Response JSON:", response.json())
